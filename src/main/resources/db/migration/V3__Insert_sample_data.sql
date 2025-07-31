@@ -23,61 +23,30 @@ INSERT INTO user_mission_progress (user_id, mission_id, claims_used, last_claim_
 -- Insert default roulette slots with weights
 INSERT INTO roulette_slots (slot_type, slot_value, weight, active) VALUES
 -- Cash rewards (lower probability)
-('CASH', '1.00', 15, TRUE),
-('CASH', '2.50', 10, TRUE),
-('CASH', '5.00', 8, TRUE),
-('CASH', '10.00', 5, TRUE),
-('CASH', '25.00', 3, TRUE),
-('CASH', '50.00', 2, TRUE),
-('CASH', '100.00', 1, TRUE),
+('CASH', '0.1', 30, TRUE),
+('CASH', '0.5', 25, TRUE),
+('CASH', '2', 20, TRUE),
+('CASH', '3', 15, TRUE),
+('CASH', '10.00', 10, TRUE),
+('CASH', '30.00', 5, TRUE),
+('CASH', '100.00', 2, TRUE),
+('CASH', '500.00', 1, TRUE),
 -- Letter rewards (higher probability)
+('LETTER', 'H', 30, TRUE),
 ('LETTER', 'A', 20, TRUE),
-('LETTER', 'B', 18, TRUE),
-('LETTER', 'C', 18, TRUE),
-('LETTER', 'D', 16, TRUE),
-('LETTER', 'E', 22, TRUE),
-('LETTER', 'F', 14, TRUE),
-('LETTER', 'G', 14, TRUE),
-('LETTER', 'H', 16, TRUE),
-('LETTER', 'I', 20, TRUE),
-('LETTER', 'J', 8, TRUE),
-('LETTER', 'K', 10, TRUE),
-('LETTER', 'L', 16, TRUE),
-('LETTER', 'M', 14, TRUE),
-('LETTER', 'N', 18, TRUE),
-('LETTER', 'O', 20, TRUE),
-('LETTER', 'P', 12, TRUE),
-('LETTER', 'Q', 6, TRUE),
-('LETTER', 'R', 18, TRUE),
-('LETTER', 'S', 18, TRUE),
-('LETTER', 'T', 18, TRUE),
-('LETTER', 'U', 14, TRUE),
-('LETTER', 'V', 10, TRUE),
-('LETTER', 'W', 12, TRUE),
-('LETTER', 'X', 6, TRUE),
-('LETTER', 'Y', 10, TRUE),
-('LETTER', 'Z', 6, TRUE);
+('LETTER', 'P', 10, TRUE),
+('LETTER', 'Y', 5, TRUE);
 
 -- Insert sample letter collections
 INSERT INTO letter_collections (user_id, letter, count) VALUES
 (1, 'H', 1),
 (1, 'A', 2),
 (1, 'P', 1),
-(1, 'Y', 1),
-(2, 'L', 1),
-(2, 'U', 1),
-(2, 'C', 2),
-(2, 'K', 1);
+(1, 'Y', 1);
 
 -- Insert default letter words for collection bonuses
 INSERT INTO letter_words (word, required_letters, reward_amount, active) VALUES
-('HAPPY', '{"H":1,"A":1,"P":2,"Y":1}', 25.00, TRUE),
-('LUCKY', '{"L":1,"U":1,"C":1,"K":1,"Y":1}', 50.00, TRUE),
-('CASINO', '{"C":1,"A":1,"S":1,"I":1,"N":1,"O":1}', 100.00, TRUE),
-('WINNER', '{"W":1,"I":1,"N":2,"E":1,"R":1}', 75.00, TRUE),
-('JACKPOT', '{"J":1,"A":1,"C":1,"K":1,"P":1,"O":1,"T":1}', 200.00, TRUE),
-('SPIN', '{"S":1,"P":1,"I":1,"N":1}', 15.00, TRUE),
-('BONUS', '{"B":1,"O":1,"N":1,"U":1,"S":1}', 30.00, TRUE);
+('HAPPY', '{"H":1,"A":1,"P":2,"Y":1}', 25.00, TRUE);
 
 -- Insert sample transaction logs
 INSERT INTO transaction_logs (user_id, transaction_type, amount, description) VALUES

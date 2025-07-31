@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug Free Roulette Spin System",
+            "request": "launch",
+            "mainClass": "com.casino.roulette.RouletteSpinSystemApplication",
+            "projectName": "free-roulette-spin-system",
+            "args": "",
+            "vmArgs": "-Dspring.profiles.active=dev",
+            "env": {},
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}

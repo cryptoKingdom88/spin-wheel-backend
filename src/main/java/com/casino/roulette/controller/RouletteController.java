@@ -25,7 +25,8 @@ import java.util.Map;
  * REST Controller for roulette-related operations
  */
 @RestController
-@RequestMapping("/api/roulette")
+@RequestMapping("/roulette")
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "false")
 @Validated
 @Tag(name = "Roulette", description = "Roulette game operations including spinning, slot configuration, and game status")
 public class RouletteController {

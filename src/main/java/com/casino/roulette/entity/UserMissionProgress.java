@@ -26,6 +26,10 @@ public class UserMissionProgress {
     @Min(value = 0, message = "Claims used cannot be negative")
     private Integer claimsUsed = 0;
     
+    @Column(name = "available_claims", nullable = false)
+    @Min(value = 0, message = "Available claims cannot be negative")
+    private Integer availableClaims = 0;
+    
     @Column(name = "last_claim_date")
     private LocalDateTime lastClaimDate;
     
@@ -80,6 +84,14 @@ public class UserMissionProgress {
         this.claimsUsed = claimsUsed;
     }
     
+    public Integer getAvailableClaims() {
+        return availableClaims;
+    }
+    
+    public void setAvailableClaims(Integer availableClaims) {
+        this.availableClaims = availableClaims;
+    }
+    
     public LocalDateTime getLastClaimDate() {
         return lastClaimDate;
     }
@@ -105,18 +117,32 @@ public class UserMissionProgress {
     }
     
     /**
-     * Increments the claims used count and updates the last claim date
+     * Adds available claims when user makes qualifying deposits
      */
-    public void incrementClaims() {
-        this.claimsUsed++;
+    public void addAvailableClaims(Integer claims) {
+        if (claims != null && claims > 0) {
+            this.availableClaims += claims;
+        }
+    }
+    
+    /**
+     * Claims all available rewards and updates the last claim date
+     * Returns the number of claims processed
+     */
+    public Integer claimAllAvailable() {
+        Integer claimedCount = this.availableClaims;
+        this.claimsUsed += this.availableClaims;
+        this.availableClaims = 0;
         this.lastClaimDate = LocalDateTime.now();
+        return claimedCount;
     }
     
     /**
      * Checks if the user can still claim rewards from this mission
      */
     public boolean canClaim(Integer maxClaims) {
-        return maxClaims == null || this.claimsUsed < maxClaims;
+        return this.availableClaims > 0 && 
+               (maxClaims == null || this.claimsUsed < maxClaims);
     }
     
     /**
@@ -124,9 +150,16 @@ public class UserMissionProgress {
      */
     public Integer getRemainingClaims(Integer maxClaims) {
         if (maxClaims == null) {
-            return Integer.MAX_VALUE;
+            return this.availableClaims;
         }
-        return Math.max(0, maxClaims - this.claimsUsed);
+        return Math.min(this.availableClaims, Math.max(0, maxClaims - this.claimsUsed));
+    }
+    
+    /**
+     * Checks if user can accumulate more claims (hasn't reached total max)
+     */
+    public boolean canAccumulateMore(Integer maxClaims) {
+        return maxClaims == null || (this.claimsUsed + this.availableClaims) < maxClaims;
     }
     
     @Override
@@ -149,6 +182,7 @@ public class UserMissionProgress {
                 ", userId=" + userId +
                 ", missionId=" + missionId +
                 ", claimsUsed=" + claimsUsed +
+                ", availableClaims=" + availableClaims +
                 ", lastClaimDate=" + lastClaimDate +
                 '}';
     }

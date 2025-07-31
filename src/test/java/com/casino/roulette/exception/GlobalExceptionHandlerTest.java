@@ -17,9 +17,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleBusinessException() {
         InsufficientSpinsException exception = new InsufficientSpinsException();
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleBusinessException(exception);
-        
+
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -33,9 +33,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleInsufficientLettersException() {
         InsufficientLettersException exception = new InsufficientLettersException();
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleBusinessException(exception);
-        
+
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -48,9 +48,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleMissionNotAvailableException() {
         MissionNotAvailableException exception = new MissionNotAvailableException();
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleBusinessException(exception);
-        
+
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -63,9 +63,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleInvalidDepositAmountException() {
         InvalidDepositAmountException exception = new InvalidDepositAmountException();
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleBusinessException(exception);
-        
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -78,9 +78,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleCustomBusinessException() {
         BusinessException exception = new BusinessException("CUSTOM_ERROR", "Custom error message");
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleBusinessException(exception);
-        
+
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -92,16 +92,17 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleMissingRequestHeaderException() {
-        // Create a mock exception with a custom message since the constructor is complex
+        // Create a mock exception with a custom message since the constructor is
+        // complex
         MissingRequestHeaderException exception = new MissingRequestHeaderException("Required-Header", null) {
             @Override
             public String getMessage() {
                 return "Required request header 'Required-Header' is not present";
             }
         };
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleMissingRequestHeaderException(exception);
-        
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -114,9 +115,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleIllegalArgumentException() {
         IllegalArgumentException exception = new IllegalArgumentException("Invalid argument provided");
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleIllegalArgumentException(exception);
-        
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -129,9 +130,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleIllegalStateException() {
         IllegalStateException exception = new IllegalStateException("Operation not allowed");
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleIllegalStateException(exception);
-        
+
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
@@ -144,9 +145,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleGenericException() {
         RuntimeException exception = new RuntimeException("Unexpected error");
-        
+
         ResponseEntity<Map<String, Object>> response = handler.handleGenericException(exception);
-        
+
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);

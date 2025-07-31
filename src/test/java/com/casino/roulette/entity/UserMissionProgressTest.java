@@ -87,25 +87,30 @@ class UserMissionProgressTest {
     }
     
     @Test
-    void testIncrementClaims() {
+    void testAddAvailableClaimsAndClaimAll() {
         UserMissionProgress progress = new UserMissionProgress(1L, 1L);
         assertEquals(0, progress.getClaimsUsed());
+        assertEquals(0, progress.getAvailableClaims());
         assertNull(progress.getLastClaimDate());
         
-        LocalDateTime beforeIncrement = LocalDateTime.now();
-        progress.incrementClaims();
-        LocalDateTime afterIncrement = LocalDateTime.now();
+        // Add available claims
+        progress.addAvailableClaims(2);
+        assertEquals(0, progress.getClaimsUsed());
+        assertEquals(2, progress.getAvailableClaims());
         
-        assertEquals(1, progress.getClaimsUsed());
-        assertNotNull(progress.getLastClaimDate());
-        assertTrue(progress.getLastClaimDate().isAfter(beforeIncrement) || 
-                  progress.getLastClaimDate().isEqual(beforeIncrement));
-        assertTrue(progress.getLastClaimDate().isBefore(afterIncrement) || 
-                  progress.getLastClaimDate().isEqual(afterIncrement));
+        // Claim all available
+        LocalDateTime beforeClaim = LocalDateTime.now();
+        Integer claimedCount = progress.claimAllAvailable();
+        LocalDateTime afterClaim = LocalDateTime.now();
         
-        // Test multiple increments
-        progress.incrementClaims();
+        assertEquals(2, claimedCount);
         assertEquals(2, progress.getClaimsUsed());
+        assertEquals(0, progress.getAvailableClaims());
+        assertNotNull(progress.getLastClaimDate());
+        assertTrue(progress.getLastClaimDate().isAfter(beforeClaim) || 
+                  progress.getLastClaimDate().isEqual(beforeClaim));
+        assertTrue(progress.getLastClaimDate().isBefore(afterClaim) || 
+                  progress.getLastClaimDate().isEqual(afterClaim));
     }
     
     @Test

@@ -167,4 +167,28 @@ public interface UserMissionProgressRepository extends JpaRepository<UserMission
            "JOIN FETCH ump.mission " +
            "WHERE ump.userId = :userId AND ump.mission.active = true")
     List<UserMissionProgress> findByUserIdWithMission(@Param("userId") Long userId);
+    
+    /**
+     * Add available claims to existing progress
+     */
+    @Modifying
+    @Query("UPDATE UserMissionProgress ump " +
+           "SET ump.availableClaims = ump.availableClaims + :claims " +
+           "WHERE ump.userId = :userId AND ump.missionId = :missionId")
+    int addAvailableClaims(@Param("userId") Long userId, 
+                          @Param("missionId") Long missionId, 
+                          @Param("claims") Integer claims);
+    
+    /**
+     * Claim all available claims for a mission
+     */
+    @Modifying
+    @Query("UPDATE UserMissionProgress ump " +
+           "SET ump.claimsUsed = ump.claimsUsed + ump.availableClaims, " +
+           "    ump.availableClaims = 0, " +
+           "    ump.lastClaimDate = :claimDate " +
+           "WHERE ump.userId = :userId AND ump.missionId = :missionId")
+    int claimAllAvailable(@Param("userId") Long userId, 
+                         @Param("missionId") Long missionId, 
+                         @Param("claimDate") LocalDateTime claimDate);
 }

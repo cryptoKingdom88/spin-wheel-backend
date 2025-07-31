@@ -1,13 +1,15 @@
 package com.casino.roulette.service;
 
 import com.casino.roulette.dto.MissionDTO;
+import com.casino.roulette.entity.DailyLoginMission;
 import com.casino.roulette.entity.DepositMission;
 import com.casino.roulette.entity.TransactionLog;
+import com.casino.roulette.entity.User;
 import com.casino.roulette.entity.UserMissionProgress;
+import com.casino.roulette.repository.DailyLoginMissionRepository;
 import com.casino.roulette.repository.DepositMissionRepository;
 import com.casino.roulette.repository.TransactionLogRepository;
 import com.casino.roulette.repository.UserMissionProgressRepository;
-import com.casino.roulette.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,23 +24,26 @@ import java.util.Optional;
 public class MissionService {
     
     private final DepositMissionRepository depositMissionRepository;
+    private final DailyLoginMissionRepository dailyLoginMissionRepository;
     private final UserMissionProgressRepository userMissionProgressRepository;
     private final TransactionLogRepository transactionLogRepository;
     private final UserService userService;
     
     @Autowired
     public MissionService(DepositMissionRepository depositMissionRepository,
+                         DailyLoginMissionRepository dailyLoginMissionRepository,
                          UserMissionProgressRepository userMissionProgressRepository,
                          TransactionLogRepository transactionLogRepository,
                          UserService userService) {
         this.depositMissionRepository = depositMissionRepository;
+        this.dailyLoginMissionRepository = dailyLoginMissionRepository;
         this.userMissionProgressRepository = userMissionProgressRepository;
         this.transactionLogRepository = transactionLogRepository;
         this.userService = userService;
     }
     
     /**
-     * Get available missions for a user
+     * Get available missions for a user (includes both deposit missions and daily login mission)
      */
     @Transactional(readOnly = true)
     public List<MissionDTO> getAvailableMissions(Long userId) {
@@ -46,23 +51,47 @@ public class MissionService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         
-        List<DepositMission> activeMissions = depositMissionRepository.findActiveOrderedByMinAmount();
         List<MissionDTO> missionDTOs = new ArrayList<>();
         
+        // Add daily login mission
+        Optional<DailyLoginMission> dailyLoginMissionOpt = dailyLoginMissionRepository.findFirstByActiveTrue();
+        if (dailyLoginMissionOpt.isPresent()) {
+            DailyLoginMission dailyLoginMission = dailyLoginMissionOpt.get();
+            User user = userService.getUser(userId);
+            
+            boolean canClaimDaily = canClaimDailyLogin(user);
+            String dailyDescription = buildDailyLoginDescription(dailyLoginMission, user);
+            
+            MissionDTO dailyMissionDTO = new MissionDTO(
+                -1L, // Special ID for daily login mission
+                dailyLoginMission.getName(),
+                dailyDescription,
+                canClaimDaily ? dailyLoginMission.getSpinsGranted() : 0,
+                canClaimDaily,
+                0, // Daily login doesn't use claims_used counter
+                Integer.MAX_VALUE // No limit on daily login
+            );
+            
+            missionDTOs.add(dailyMissionDTO);
+        }
+        
+        // Add deposit missions
+        List<DepositMission> activeMissions = depositMissionRepository.findActiveOrderedByMinAmount();
         for (DepositMission mission : activeMissions) {
             Optional<UserMissionProgress> progressOpt = userMissionProgressRepository
                 .findByUserIdAndMissionId(userId, mission.getId());
             
             Integer claimsUsed = progressOpt.map(UserMissionProgress::getClaimsUsed).orElse(0);
-            boolean canClaim = claimsUsed < mission.getMaxClaims();
+            Integer availableClaims = progressOpt.map(UserMissionProgress::getAvailableClaims).orElse(0);
+            boolean canClaim = availableClaims > 0 && claimsUsed < mission.getMaxClaims();
             
-            String description = buildMissionDescription(mission);
+            String description = buildDepositMissionDescription(mission);
             
             MissionDTO dto = new MissionDTO(
                 mission.getId(),
                 mission.getName(),
                 description,
-                mission.getSpinsGranted(),
+                mission.getSpinsGranted() * availableClaims, // Total spins available
                 canClaim,
                 claimsUsed,
                 mission.getMaxClaims()
@@ -75,7 +104,53 @@ public class MissionService {
     }
     
     /**
-     * Claim mission reward (spins)
+     * Get basic mission list without user-specific progress
+     */
+    @Transactional(readOnly = true)
+    public List<MissionDTO> getBasicMissionList() {
+        List<MissionDTO> missionDTOs = new ArrayList<>();
+        
+        // Add daily login mission (basic info only)
+        Optional<DailyLoginMission> dailyLoginMissionOpt = dailyLoginMissionRepository.findFirstByActiveTrue();
+        if (dailyLoginMissionOpt.isPresent()) {
+            DailyLoginMission dailyLoginMission = dailyLoginMissionOpt.get();
+            
+            MissionDTO dailyMissionDTO = new MissionDTO(
+                -1L, // Special ID for daily login mission
+                dailyLoginMission.getName(),
+                dailyLoginMission.getDescription(),
+                dailyLoginMission.getSpinsGranted(), // Base spins available
+                false, // Cannot determine claim status without user
+                0, // No user-specific data
+                1 // No limit on daily login
+            );
+            
+            missionDTOs.add(dailyMissionDTO);
+        }
+        
+        // Add deposit missions (basic info only)
+        List<DepositMission> activeMissions = depositMissionRepository.findActiveOrderedByMinAmount();
+        for (DepositMission mission : activeMissions) {
+            String description = buildDepositMissionDescription(mission);
+            
+            MissionDTO dto = new MissionDTO(
+                mission.getId(),
+                mission.getName(),
+                description,
+                mission.getSpinsGranted(), // Base spins per claim
+                false, // Cannot determine claim status without user
+                0, // No user-specific data
+                mission.getMaxClaims()
+            );
+            
+            missionDTOs.add(dto);
+        }
+        
+        return missionDTOs;
+    }
+    
+    /**
+     * Claim mission reward (spins) - handles both deposit missions and daily login mission
      */
     public void claimMissionReward(Long userId, Long missionId) {
         if (userId == null) {
@@ -88,7 +163,13 @@ public class MissionService {
         // Ensure user exists
         userService.getOrCreateUser(userId);
         
-        // Get mission
+        // Check if this is a daily login mission (special ID -1)
+        if (missionId == -1L) {
+            claimDailyLoginMission(userId);
+            return;
+        }
+        
+        // Handle deposit mission
         DepositMission mission = depositMissionRepository.findById(missionId)
             .orElseThrow(() -> new IllegalArgumentException("Mission not found: " + missionId));
         
@@ -103,21 +184,35 @@ public class MissionService {
         
         // Check if user can still claim
         if (!progress.canClaim(mission.getMaxClaims())) {
-            throw new IllegalStateException("User has reached maximum claims for mission: " + missionId);
+            throw new IllegalStateException("No available claims for mission: " + missionId);
         }
         
-        // Increment claims and update timestamp
-        progress.incrementClaims();
+        // Claim all available rewards at once
+        Integer claimedCount = progress.claimAllAvailable();
         userMissionProgressRepository.save(progress);
         
-        // Grant spins to user
-        userService.grantSpins(userId, mission.getSpinsGranted(), 
-            "Mission reward: " + mission.getName());
+        // Grant spins to user (all accumulated spins at once)
+        Integer totalSpins = mission.getSpinsGranted() * claimedCount;
+        userService.grantSpins(userId, totalSpins, 
+            "Mission reward: " + mission.getName() + " (x" + claimedCount + ")");
         
         // Log the mission claim transaction
         TransactionLog log = TransactionLog.createDepositMissionSpinLog(
-            userId, mission.getName(), mission.getSpinsGranted());
+            userId, mission.getName() + " (x" + claimedCount + ")", totalSpins);
         transactionLogRepository.save(log);
+    }
+    
+    /**
+     * Claim daily login mission reward
+     */
+    private void claimDailyLoginMission(Long userId) {
+        // This is the same logic as in UserService.grantDailyLoginSpin
+        // but called through the mission system
+        boolean spinGranted = userService.grantDailyLoginSpin(userId);
+        
+        if (!spinGranted) {
+            throw new IllegalStateException("Daily login spin already claimed today");
+        }
     }
     
     /**
@@ -139,20 +234,16 @@ public class MissionService {
             .findActiveByAmountRange(depositAmount);
         
         for (DepositMission mission : eligibleMissions) {
-            // Check if user is still eligible for this mission
-            Optional<UserMissionProgress> progressOpt = userMissionProgressRepository
-                .findByUserIdAndMissionId(userId, mission.getId());
+            // Get or create user progress
+            UserMissionProgress progress = userMissionProgressRepository
+                .findByUserIdAndMissionId(userId, mission.getId())
+                .orElse(new UserMissionProgress(userId, mission.getId()));
             
-            Integer claimsUsed = progressOpt.map(UserMissionProgress::getClaimsUsed).orElse(0);
-            
-            if (claimsUsed < mission.getMaxClaims()) {
-                // User is eligible - create or update progress but don't auto-claim
-                // The user needs to manually claim through the mission interface
-                if (progressOpt.isEmpty()) {
-                    // Create initial progress record
-                    UserMissionProgress newProgress = new UserMissionProgress(userId, mission.getId());
-                    userMissionProgressRepository.save(newProgress);
-                }
+            // Check if user can accumulate more claims
+            if (progress.canAccumulateMore(mission.getMaxClaims())) {
+                // Add one available claim for this deposit
+                progress.addAvailableClaims(1);
+                userMissionProgressRepository.save(progress);
             }
         }
         
@@ -213,9 +304,45 @@ public class MissionService {
     }
     
     /**
-     * Build mission description based on amount range and rewards
+     * Check if user can claim daily login bonus
      */
-    private String buildMissionDescription(DepositMission mission) {
+    private boolean canClaimDailyLogin(User user) {
+        if (user == null) {
+            return true; // New user can claim
+        }
+        
+        if (user.getLastDailyLogin() == null) {
+            return true; // Never logged in before
+        }
+        
+        // Check if last login was on a different day
+        return !user.getLastDailyLogin().toLocalDate().equals(java.time.LocalDate.now());
+    }
+    
+    /**
+     * Build daily login mission description
+     */
+    private String buildDailyLoginDescription(DailyLoginMission mission, User user) {
+        StringBuilder description = new StringBuilder();
+        description.append(mission.getDescription());
+        
+        if (user != null && user.getLastDailyLogin() != null) {
+            if (user.getLastDailyLogin().toLocalDate().equals(java.time.LocalDate.now())) {
+                description.append(" (Already claimed today)");
+            } else {
+                description.append(" (Available now!)");
+            }
+        } else {
+            description.append(" (Available now!)");
+        }
+        
+        return description.toString();
+    }
+    
+    /**
+     * Build deposit mission description based on amount range and rewards
+     */
+    private String buildDepositMissionDescription(DepositMission mission) {
         StringBuilder description = new StringBuilder();
         description.append("Deposit ");
         

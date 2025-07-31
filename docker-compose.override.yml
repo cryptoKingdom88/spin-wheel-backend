@@ -1,7 +1,7 @@
 # Docker Compose override for development environment
 # This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
 
-version: '3.8'
+version: "3.8"
 
 services:
   roulette-api:
@@ -10,11 +10,11 @@ services:
       - LOG_LEVEL_ROOT=DEBUG
       - LOG_LEVEL_CASINO=DEBUG
     volumes:
-      - ./src:/app/src:ro  # Mount source for hot reload in dev
+      - ./src:/app/src:ro # Mount source for hot reload in dev
       - ./logs:/app/logs
     ports:
       - "8080:8080"
-      - "5005:5005"  # Debug port
+      - "5005:5005" # Debug port
     command: >
       sh -c "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 
              $$JVM_OPTS -jar app.jar"

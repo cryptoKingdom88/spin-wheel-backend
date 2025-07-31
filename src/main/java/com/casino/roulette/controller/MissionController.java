@@ -24,7 +24,8 @@ import java.util.Map;
  * REST Controller for mission-related operations
  */
 @RestController
-@RequestMapping("/api/missions")
+@RequestMapping("/missions")
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "false")
 @Validated
 @Tag(name = "Missions", description = "Mission management and reward claiming operations")
 public class MissionController {
@@ -44,7 +45,7 @@ public class MissionController {
      */
     @Operation(
         summary = "Get available missions",
-        description = "Retrieve all missions available for the specified user, including claim status and remaining claims"
+        description = "Retrieve all missions. If X-User-Id header is provided, includes user-specific progress and claim status. Without user ID, returns basic mission information only."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -76,10 +77,19 @@ public class MissionController {
     })
     @GetMapping
     public ResponseEntity<List<MissionDTO>> getAvailableMissions(
-            @Parameter(description = "User ID", required = true, example = "12345")
-            @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
+            @Parameter(description = "User ID (optional) - if provided, includes user-specific progress", 
+                      required = false, example = "12345")
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         
-        List<MissionDTO> missions = missionService.getAvailableMissions(userId);
+        List<MissionDTO> missions;
+        if (userId != null) {
+            // Return missions with user-specific progress
+            missions = missionService.getAvailableMissions(userId);
+        } else {
+            // Return basic mission list without user progress
+            missions = missionService.getBasicMissionList();
+        }
+        
         return ResponseEntity.ok(missions);
     }
     

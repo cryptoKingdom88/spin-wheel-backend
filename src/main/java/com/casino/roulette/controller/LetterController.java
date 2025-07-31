@@ -25,7 +25,8 @@ import java.util.Map;
  * REST Controller for letter collection and word bonus operations
  */
 @RestController
-@RequestMapping("/api/letters")
+@RequestMapping("/letters")
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "false")
 @Validated
 @Tag(name = "Letters", description = "Letter collection and word bonus operations")
 public class LetterController {

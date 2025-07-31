@@ -55,6 +55,14 @@
             <scope>test</scope>
         </dependency>
         
+        <!-- Hot Reload DevTools -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        
         <!-- H2 Database for Testing -->
         <dependency>
             <groupId>com.h2database</groupId>

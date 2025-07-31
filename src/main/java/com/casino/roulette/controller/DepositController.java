@@ -29,7 +29,8 @@ import java.util.Map;
  * REST Controller for deposit processing and mission evaluation
  */
 @RestController
-@RequestMapping("/api/deposits")
+@RequestMapping("/deposits")
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "false")
 @Validated
 @Tag(name = "Deposits", description = "Deposit processing and mission evaluation operations")
 public class DepositController {
