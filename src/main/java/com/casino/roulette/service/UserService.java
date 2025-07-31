@@ -2,6 +2,7 @@ package com.casino.roulette.service;
 
 import com.casino.roulette.entity.TransactionLog;
 import com.casino.roulette.entity.User;
+import com.casino.roulette.exception.UserNotFoundException;
 import com.casino.roulette.repository.TransactionLogRepository;
 import com.casino.roulette.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,19 @@ public class UserService {
     }
     
     /**
-     * Get user by ID, creating if not exists
+     * Validate that user exists, throw exception if not found
+     */
+    public User validateUserExists(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+    
+    /**
+     * Get user by ID, creating if not exists (for backward compatibility)
      */
     public User getOrCreateUser(Long userId) {
         if (userId == null) {

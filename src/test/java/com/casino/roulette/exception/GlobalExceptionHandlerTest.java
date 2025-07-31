@@ -156,4 +156,21 @@ class GlobalExceptionHandlerTest {
         assertEquals("An unexpected error occurred", body.get("message"));
         assertNotNull(body.get("timestamp"));
     }
+
+    @Test
+    void testHandleUserNotFoundException() {
+        Long userId = 999L;
+        UserNotFoundException exception = new UserNotFoundException(userId);
+
+        ResponseEntity<Map<String, Object>> response = handler.handleUserNotFoundException(exception);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertEquals(false, body.get("success"));
+        assertEquals("USER_NOT_FOUND", body.get("error"));
+        assertEquals("User not found with ID: " + userId, body.get("message"));
+        assertEquals(userId, body.get("userId"));
+        assertNotNull(body.get("timestamp"));
+    }
 }

@@ -44,6 +44,9 @@ public class RouletteService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         
+        // Validate user exists first
+        userService.validateUserExists(userId);
+        
         // Check if user has sufficient spins
         if (!userService.hasSufficientSpins(userId, 1)) {
             throw new IllegalStateException("User has no available spins");

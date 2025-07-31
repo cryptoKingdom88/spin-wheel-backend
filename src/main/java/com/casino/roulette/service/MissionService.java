@@ -51,6 +51,9 @@ public class MissionService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         
+        // Validate user exists first
+        userService.validateUserExists(userId);
+        
         List<MissionDTO> missionDTOs = new ArrayList<>();
         
         // Add daily login mission
@@ -69,7 +72,7 @@ public class MissionService {
                 canClaimDaily ? dailyLoginMission.getSpinsGranted() : 0,
                 canClaimDaily,
                 0, // Daily login doesn't use claims_used counter
-                Integer.MAX_VALUE // No limit on daily login
+                1 // No limit on daily login
             );
             
             missionDTOs.add(dailyMissionDTO);
@@ -160,8 +163,8 @@ public class MissionService {
             throw new IllegalArgumentException("Mission ID cannot be null");
         }
         
-        // Ensure user exists
-        userService.getOrCreateUser(userId);
+        // Validate user exists first
+        userService.validateUserExists(userId);
         
         // Check if this is a daily login mission (special ID -1)
         if (missionId == -1L) {
@@ -226,8 +229,8 @@ public class MissionService {
             throw new IllegalArgumentException("Deposit amount must be positive");
         }
         
-        // Ensure user exists
-        userService.getOrCreateUser(userId);
+        // Validate user exists first
+        userService.validateUserExists(userId);
         
         // Find missions that match the deposit amount
         List<DepositMission> eligibleMissions = depositMissionRepository

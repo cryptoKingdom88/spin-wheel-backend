@@ -1,6 +1,7 @@
 package com.casino.roulette.controller;
 
 import com.casino.roulette.dto.MissionDTO;
+import com.casino.roulette.exception.UserNotFoundException;
 import com.casino.roulette.service.MissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -72,7 +73,7 @@ public class MissionController {
                 )
             )
         ),
-        @ApiResponse(responseCode = "400", description = "Invalid user ID"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping
@@ -83,8 +84,13 @@ public class MissionController {
         
         List<MissionDTO> missions;
         if (userId != null) {
-            // Return missions with user-specific progress
-            missions = missionService.getAvailableMissions(userId);
+            try {
+                // Return missions with user-specific progress
+                missions = missionService.getAvailableMissions(userId);
+            } catch (UserNotFoundException e) {
+                // If user doesn't exist, return basic mission list instead
+                missions = missionService.getBasicMissionList();
+            }
         } else {
             // Return basic mission list without user progress
             missions = missionService.getBasicMissionList();

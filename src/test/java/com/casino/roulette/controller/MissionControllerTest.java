@@ -232,4 +232,58 @@ class MissionControllerTest {
         verify(missionService, never()).isUserEligibleForMission(any(), any());
         verify(missionService, never()).getRemainingClaims(any(), any());
     }
+
+    @Test
+    void getAvailableMissions_WithNonExistentUser_ReturnsBasicMissionList() throws Exception {
+        // Given
+        Long nonExistentUserId = 999L;
+        List<MissionDTO> basicMissions = Arrays.asList(
+            new MissionDTO(1L, "Small Deposit", "Deposit $50-$99 for 1 spin", 1, false, 0, 50),
+            new MissionDTO(2L, "Medium Deposit", "Deposit $100-$199 for 1 spin", 1, false, 0, 100)
+        );
+        
+        when(missionService.getAvailableMissions(nonExistentUserId))
+            .thenThrow(new com.casino.roulette.exception.UserNotFoundException(nonExistentUserId));
+        when(missionService.getBasicMissionList()).thenReturn(basicMissions);
+        
+        // When & Then
+        mockMvc.perform(get("/api/missions")
+                .header("X-User-Id", nonExistentUserId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("Small Deposit"))
+                .andExpect(jsonPath("$[0].canClaim").value(false))
+                .andExpect(jsonPath("$[1].name").value("Medium Deposit"))
+                .andExpect(jsonPath("$[1].canClaim").value(false));
+        
+        verify(missionService).getAvailableMissions(nonExistentUserId);
+        verify(missionService).getBasicMissionList();
+    }
+
+    @Test
+    void getAvailableMissions_WithoutUserId_ReturnsBasicMissionList() throws Exception {
+        // Given
+        List<MissionDTO> basicMissions = Arrays.asList(
+            new MissionDTO(1L, "Small Deposit", "Deposit $50-$99 for 1 spin", 1, false, 0, 50),
+            new MissionDTO(-1L, "Daily Login", "Login daily for 1 spin", 1, false, 0, 1)
+        );
+        
+        when(missionService.getBasicMissionList()).thenReturn(basicMissions);
+        
+        // When & Then
+        mockMvc.perform(get("/api/missions"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("Small Deposit"))
+                .andExpect(jsonPath("$[0].canClaim").value(false))
+                .andExpect(jsonPath("$[1].name").value("Daily Login"))
+                .andExpect(jsonPath("$[1].id").value(-1));
+        
+        verify(missionService).getBasicMissionList();
+        verify(missionService, never()).getAvailableMissions(any());
+    }
 }

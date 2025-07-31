@@ -54,8 +54,8 @@ public class LetterService {
             throw new IllegalArgumentException("Letter must be a single alphabetic character");
         }
         
-        // Ensure user exists
-        userService.getOrCreateUser(userId);
+        // Validate user exists first
+        userService.validateUserExists(userId);
         
         String upperLetter = letter.toUpperCase();
         
@@ -89,6 +89,9 @@ public class LetterService {
         if (userId == null) {
             throw new IllegalArgumentException("User ID cannot be null");
         }
+        
+        // Validate user exists first
+        userService.validateUserExists(userId);
         
         List<LetterCollection> collections = letterCollectionRepository
             .findByUserIdWithPositiveCount(userId);
@@ -135,8 +138,8 @@ public class LetterService {
             throw new IllegalArgumentException("Word ID cannot be null");
         }
         
-        // Ensure user exists
-        userService.getOrCreateUser(userId);
+        // Validate user exists first
+        userService.validateUserExists(userId);
         
         // Get the word
         LetterWord word = letterWordRepository.findById(wordId)

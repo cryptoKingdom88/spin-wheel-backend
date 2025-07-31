@@ -93,6 +93,21 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * Handle user not found exceptions
+     */
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleUserNotFoundException(UserNotFoundException e) {
+        Map<String, Object> errorResponse = Map.of(
+            "success", false,
+            "error", "USER_NOT_FOUND",
+            "message", e.getMessage(),
+            "userId", e.getUserId(),
+            "timestamp", LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+    
+    /**
      * Handle illegal argument exceptions
      */
     @ExceptionHandler(IllegalArgumentException.class)
