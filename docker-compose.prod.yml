@@ -1,0 +1,66 @@
+# Production Docker Compose configuration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  roulette-api:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - LOG_LEVEL_ROOT=WARN
+      - LOG_LEVEL_CASINO=INFO
+      - JVM_OPTS=-Xmx2g -Xms1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    volumes:
+      - ./logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+
+  postgres:
+    environment:
+      - POSTGRES_DB=casino_roulette_prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./backups:/backups
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10
+
+  nginx:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+volumes:
+  postgres_prod_data:
+    driver: local

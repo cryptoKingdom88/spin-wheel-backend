@@ -1,0 +1,76 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:casino_roulette_prod}
+    username: ${DB_USERNAME:casino_user}
+    password: ${DB_PASSWORD:casino_password}
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        generate_statistics: false
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 8
+        min-idle: 2
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  tomcat:
+    max-threads: 300
+    min-spare-threads: 20
+    accept-count: 100
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.casino: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /app/logs/roulette-api.log
+    max-size: 200MB
+    max-history: 60
+  logback:
+    rollingpolicy:
+      max-file-size: 200MB
+      total-size-cap: 5GB

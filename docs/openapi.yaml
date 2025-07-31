@@ -1,0 +1,806 @@
+openapi: 3.0.3
+info:
+  title: Free Roulette Spin System API
+  version: 1.0.0
+  description: |
+    ## Overview
+    
+    The Free Roulette Spin System API provides endpoints for managing user rewards, 
+    roulette gameplay, and letter collection mechanics in a casino platform.
+    
+    ## Features
+    
+    - **Mission Management**: Earn and claim free spins through deposit-based missions
+    - **Roulette Gameplay**: Spin the roulette wheel to win cash and letters
+    - **Letter Collection**: Collect letters to form words and claim collection bonuses
+    - **Deposit Processing**: Process deposits and evaluate mission eligibility
+    - **Transaction Tracking**: Complete audit trail of all balance changes
+    
+    ## Authentication
+    
+    All endpoints require a valid User ID in the `X-User-Id` header. This ID should 
+    correspond to a user in the main casino system.
+    
+    ## Error Handling
+    
+    The API uses standard HTTP status codes and returns structured error responses 
+    with detailed error information including error codes and user-friendly messages.
+  contact:
+    name: Casino Development Team
+    email: dev@casino.com
+    url: https://casino.com
+  license:
+    name: Proprietary
+    url: https://casino.com/license
+
+servers:
+  - url: http://localhost:8080/api
+    description: Development server - Local development environment
+  - url: https://staging-api.casino.com/roulette
+    description: Staging server - Testing environment
+  - url: https://api.casino.com/roulette
+    description: Production server - Live environment
+
+security:
+  - UserIdHeader: []
+
+paths:
+  /missions:
+    get:
+      tags:
+        - Missions
+      summary: Get available missions
+      description: Retrieve all missions available for the specified user, including claim status and remaining claims
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+      responses:
+        '200':
+          description: Successfully retrieved available missions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MissionDTO'
+              examples:
+                available_missions:
+                  summary: Available missions
+                  value:
+                    - id: 1
+                      name: "Small Deposit Mission"
+                      description: "Deposit $50-$99 to earn 1 free spin"
+                      spinsAvailable: 1
+                      canClaim: true
+                      claimsUsed: 5
+                      maxClaims: 50
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /missions/{missionId}/claim:
+    post:
+      tags:
+        - Missions
+      summary: Claim mission reward
+      description: Claim free spins from a completed mission. The mission must be eligible and the user must not have exceeded the maximum claims.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+        - name: missionId
+          in: path
+          required: true
+          description: Mission ID to claim
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Mission reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  summary: Success response
+                  value:
+                    success: true
+                    message: "Mission reward claimed successfully"
+                    missionId: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Mission not available for claiming
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                mission_not_available:
+                  summary: Mission not available
+                  value:
+                    success: false
+                    error: "MISSION_NOT_AVAILABLE"
+                    message: "Mission has reached maximum claims"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /roulette/spin:
+    post:
+      tags:
+        - Roulette
+      summary: Spin the roulette wheel
+      description: Consume one free spin to play the roulette game. Returns the result (cash or letter) and remaining spins.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+      responses:
+        '200':
+          description: Spin completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpinResultDTO'
+              examples:
+                cash_win:
+                  summary: User wins cash
+                  value:
+                    type: "CASH"
+                    value: "5.00"
+                    cashWon: 5.00
+                    letterWon: null
+                    remainingSpins: 2
+                letter_win:
+                  summary: User wins a letter
+                  value:
+                    type: "LETTER"
+                    value: "H"
+                    cashWon: null
+                    letterWon: "H"
+                    remainingSpins: 2
+        '400':
+          description: Invalid request - insufficient spins
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                insufficient_spins:
+                  summary: No spins available
+                  value:
+                    success: false
+                    error: "INSUFFICIENT_SPINS"
+                    message: "You don't have enough spins available"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /roulette/slots:
+    get:
+      tags:
+        - Roulette
+      summary: Get roulette slot configuration
+      description: Retrieve the current configuration of all active roulette slots including their types, values, and weights.
+      responses:
+        '200':
+          description: Successfully retrieved slot configuration
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RouletteSlot'
+              examples:
+                slot_configuration:
+                  summary: Slot configuration
+                  value:
+                    - id: 1
+                      type: "CASH"
+                      value: "1.00"
+                      weight: 30
+                      active: true
+                    - id: 2
+                      type: "LETTER"
+                      value: "H"
+                      weight: 20
+                      active: true
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /letters/collection:
+    get:
+      tags:
+        - Letters
+      summary: Get user's letter collection
+      description: Retrieve all letters collected by the user and their current counts.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+      responses:
+        '200':
+          description: Successfully retrieved letter collection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LetterCollectionDTO'
+              examples:
+                letter_collection:
+                  summary: Letter collection
+                  value:
+                    - letter: "H"
+                      count: 2
+                    - letter: "A"
+                      count: 1
+                    - letter: "P"
+                      count: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /letters/words:
+    get:
+      tags:
+        - Letters
+      summary: Get available words
+      description: Retrieve all available words for collection bonuses with user-specific claim status.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+      responses:
+        '200':
+          description: Successfully retrieved available words
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LetterWordDTO'
+              examples:
+                available_words:
+                  summary: Available words
+                  value:
+                    - id: 1
+                      word: "HAPPY"
+                      requiredLetters:
+                        H: 1
+                        A: 1
+                        P: 2
+                        Y: 1
+                      rewardAmount: 10.00
+                      canClaim: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /letters/words/{wordId}/claim:
+    post:
+      tags:
+        - Letters
+      summary: Claim word bonus
+      description: Claim a bonus for completing a word collection. Deducts required letters from user's collection.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+        - name: wordId
+          in: path
+          required: true
+          description: Word ID to claim
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Word bonus claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  summary: Success response
+                  value:
+                    success: true
+                    message: "Word bonus claimed successfully"
+                    wordId: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Insufficient letters for word
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                insufficient_letters:
+                  summary: Not enough letters
+                  value:
+                    success: false
+                    error: "INSUFFICIENT_LETTERS"
+                    message: "You don't have enough letters to claim this word"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /deposits:
+    post:
+      tags:
+        - Deposits
+      summary: Process user deposit
+      description: Process a user deposit, update their balance, and evaluate eligible missions for free spins.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+            examples:
+              deposit_request:
+                summary: Deposit request
+                value:
+                  amount: 100.00
+      responses:
+        '200':
+          description: Deposit processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositResponse'
+              examples:
+                successful_deposit:
+                  summary: Successful deposit
+                  value:
+                    success: true
+                    message: "Deposit processed successfully"
+                    depositAmount: 100.00
+                    newBalance: 250.00
+                    eligibleMissions: 2
+                    missionIds: [1, 2]
+        '400':
+          description: Invalid deposit amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_amount:
+                  summary: Invalid amount
+                  value:
+                    success: false
+                    error: "INVALID_DEPOSIT_AMOUNT"
+                    message: "Deposit amount must be greater than 0"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /deposits/history:
+    get:
+      tags:
+        - Deposits
+      summary: Get deposit history
+      description: Retrieve the user's deposit transaction history.
+      parameters:
+        - $ref: '#/components/parameters/UserIdHeader'
+      responses:
+        '200':
+          description: Successfully retrieved deposit history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositHistoryResponse'
+              examples:
+                deposit_history:
+                  summary: Deposit history
+                  value:
+                    deposits:
+                      - id: 1
+                        userId: 12345
+                        transactionType: "DEPOSIT"
+                        amount: 100.00
+                        description: "User deposit"
+                        createdAt: "2024-01-15T10:30:00Z"
+                    totalDeposited: 100.00
+                    depositCount: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    UserIdHeader:
+      type: apiKey
+      in: header
+      name: X-User-Id
+      description: User ID header for authentication. Must be a valid positive integer.
+
+  parameters:
+    UserIdHeader:
+      name: X-User-Id
+      in: header
+      required: true
+      description: User ID
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        example: 12345
+
+  schemas:
+    MissionDTO:
+      type: object
+      required:
+        - id
+        - name
+        - canClaim
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Mission ID
+          example: 1
+        name:
+          type: string
+          description: Mission name
+          example: "Small Deposit Mission"
+        description:
+          type: string
+          description: Mission description
+          example: "Deposit $50-$99 to earn 1 free spin"
+        spinsAvailable:
+          type: integer
+          minimum: 0
+          description: Number of spins available from this mission
+          example: 1
+        canClaim:
+          type: boolean
+          description: Whether the mission can be claimed
+          example: true
+        claimsUsed:
+          type: integer
+          minimum: 0
+          description: Number of times this mission has been claimed
+          example: 5
+        maxClaims:
+          type: integer
+          minimum: 0
+          description: Maximum number of times this mission can be claimed
+          example: 50
+
+    SpinResultDTO:
+      type: object
+      required:
+        - type
+        - value
+        - remainingSpins
+      properties:
+        type:
+          type: string
+          enum: [CASH, LETTER]
+          description: Type of reward won
+          example: "CASH"
+        value:
+          type: string
+          description: Value of the reward (amount for cash, letter for letter)
+          example: "5.00"
+        cashWon:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Cash amount won (null for letter wins)
+          example: 5.00
+        letterWon:
+          type: string
+          pattern: "^[A-Z]$"
+          description: Letter won (null for cash wins)
+          example: "H"
+        remainingSpins:
+          type: integer
+          minimum: 0
+          description: Number of spins remaining after this spin
+          example: 2
+
+    LetterCollectionDTO:
+      type: object
+      required:
+        - letter
+        - count
+      properties:
+        letter:
+          type: string
+          pattern: "^[A-Z]$"
+          description: Single uppercase letter
+          example: "H"
+        count:
+          type: integer
+          minimum: 0
+          description: Number of this letter collected
+          example: 2
+
+    LetterWordDTO:
+      type: object
+      required:
+        - id
+        - word
+        - requiredLetters
+        - rewardAmount
+        - canClaim
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Word ID
+          example: 1
+        word:
+          type: string
+          description: The word that can be formed
+          example: "HAPPY"
+        requiredLetters:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+          description: Map of letters to required counts
+          example:
+            H: 1
+            A: 1
+            P: 2
+            Y: 1
+        rewardAmount:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Cash reward for completing this word
+          example: 10.00
+        canClaim:
+          type: boolean
+          description: Whether the user can claim this word bonus
+          example: true
+
+    RouletteSlot:
+      type: object
+      required:
+        - id
+        - type
+        - value
+        - weight
+        - active
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Slot ID
+          example: 1
+        type:
+          type: string
+          enum: [CASH, LETTER]
+          description: Type of slot
+          example: "CASH"
+        value:
+          type: string
+          description: Value of the slot (amount for cash, letter for letter)
+          example: "1.00"
+        weight:
+          type: integer
+          minimum: 1
+          description: Weight for random selection
+          example: 30
+        active:
+          type: boolean
+          description: Whether the slot is active
+          example: true
+
+    DepositRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Deposit amount
+          example: 100.00
+
+    DepositResponse:
+      type: object
+      required:
+        - success
+        - message
+        - depositAmount
+        - newBalance
+        - eligibleMissions
+        - missionIds
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Deposit processed successfully"
+        depositAmount:
+          type: number
+          format: decimal
+          description: Amount deposited
+          example: 100.00
+        newBalance:
+          type: number
+          format: decimal
+          description: User's new balance after deposit
+          example: 250.00
+        eligibleMissions:
+          type: integer
+          minimum: 0
+          description: Number of missions eligible for this deposit
+          example: 2
+        missionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: IDs of eligible missions
+          example: [1, 2]
+
+    DepositHistoryResponse:
+      type: object
+      required:
+        - deposits
+        - totalDeposited
+        - depositCount
+      properties:
+        deposits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionLog'
+          description: List of deposit transactions
+        totalDeposited:
+          type: number
+          format: decimal
+          description: Total amount deposited
+          example: 100.00
+        depositCount:
+          type: integer
+          minimum: 0
+          description: Number of deposits made
+          example: 1
+
+    TransactionLog:
+      type: object
+      required:
+        - id
+        - userId
+        - transactionType
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Transaction ID
+          example: 1
+        userId:
+          type: integer
+          format: int64
+          description: User ID
+          example: 12345
+        transactionType:
+          type: string
+          description: Type of transaction
+          example: "DEPOSIT"
+        amount:
+          type: number
+          format: decimal
+          description: Transaction amount
+          example: 100.00
+        description:
+          type: string
+          description: Transaction description
+          example: "User deposit"
+        createdAt:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - message
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error code
+          example: "INSUFFICIENT_SPINS"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "You don't have enough spins available"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2024-01-15T10:30:00Z"
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalid_user_id:
+              summary: Invalid User ID
+              value:
+                success: false
+                error: "INVALID_USER_ID"
+                message: "User ID must be a positive integer"
+                timestamp: "2024-01-15T10:30:00Z"
+
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_header:
+              summary: Missing X-User-Id header
+              value:
+                success: false
+                error: "MISSING_USER_ID"
+                message: "X-User-Id header is required"
+                timestamp: "2024-01-15T10:30:00Z"
+
+    InternalServerError:
+      description: Internal Server Error - Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            server_error:
+              summary: Internal server error
+              value:
+                success: false
+                error: "INTERNAL_ERROR"
+                message: "An unexpected error occurred. Please try again later."
+                timestamp: "2024-01-15T10:30:00Z"
+
+tags:
+  - name: Missions
+    description: Mission management and reward claiming operations
+  - name: Roulette
+    description: Roulette game operations including spinning, slot configuration, and game status
+  - name: Letters
+    description: Letter collection and word bonus operations
+  - name: Deposits
+    description: Deposit processing and mission evaluation operations
