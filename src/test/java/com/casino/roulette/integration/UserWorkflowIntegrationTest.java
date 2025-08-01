@@ -236,12 +236,12 @@ public class UserWorkflowIntegrationTest {
             
             if ("CASH".equals(result.getType())) {
                 totalCashWon++;
-                assertThat(result.getCashWon()).isNotNull();
-                assertThat(result.getCashWon()).isGreaterThan(BigDecimal.ZERO);
+                assertThat(result.getCash()).isNotNull();
+                assertThat(result.getCash()).isGreaterThan(BigDecimal.ZERO);
             } else if ("LETTER".equals(result.getType())) {
                 totalLettersWon++;
-                assertThat(result.getLetterWon()).isNotNull();
-                assertThat(result.getLetterWon()).matches("[A-Z]");
+                assertThat(result.getLetter()).isNotNull();
+                assertThat(result.getLetter()).matches("[A-Z]");
             }
         }
 

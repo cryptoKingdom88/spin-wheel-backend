@@ -77,8 +77,8 @@ class RouletteServiceTest {
         assertNotNull(result);
         assertEquals("CASH", result.getType());
         assertEquals("10.50", result.getValue());
-        assertEquals(new BigDecimal("10.50"), result.getCashWon());
-        assertNull(result.getLetterWon());
+        assertEquals(new BigDecimal("10.50"), result.getCash());
+        assertNull(result.getLetter());
         assertEquals(Integer.valueOf(5), result.getRemainingSpins());
         
         verify(userService).updateCashBalance(TEST_USER_ID, new BigDecimal("10.50"));
@@ -101,8 +101,8 @@ class RouletteServiceTest {
         assertNotNull(result);
         assertEquals("LETTER", result.getType());
         assertEquals("A", result.getValue());
-        assertNull(result.getCashWon());
-        assertEquals("A", result.getLetterWon());
+        assertNull(result.getCash());
+        assertEquals("A", result.getLetter());
         assertEquals(Integer.valueOf(5), result.getRemainingSpins());
         
         verify(letterService).addLetterToCollection(TEST_USER_ID, "A");

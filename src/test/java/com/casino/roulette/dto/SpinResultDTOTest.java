@@ -37,8 +37,8 @@ class SpinResultDTOTest {
         
         assertEquals("CASH", dto.getType());
         assertEquals("10.50", dto.getValue());
-        assertEquals(new BigDecimal("10.50"), dto.getCashWon());
-        assertNull(dto.getLetterWon());
+        assertEquals(new BigDecimal("10.50"), dto.getCash());
+        assertNull(dto.getLetter());
         assertEquals(5, dto.getRemainingSpins());
     }
 
@@ -48,8 +48,8 @@ class SpinResultDTOTest {
         
         assertEquals("LETTER", dto.getType());
         assertEquals("A", dto.getValue());
-        assertNull(dto.getCashWon());
-        assertEquals("A", dto.getLetterWon());
+        assertNull(dto.getCash());
+        assertEquals("A", dto.getLetter());
         assertEquals(4, dto.getRemainingSpins());
     }
 
@@ -59,8 +59,8 @@ class SpinResultDTOTest {
         
         assertEquals("CASH", dto.getType());
         assertEquals("5.00", dto.getValue());
-        assertEquals(new BigDecimal("5.00"), dto.getCashWon());
-        assertNull(dto.getLetterWon());
+        assertEquals(new BigDecimal("5.00"), dto.getCash());
+        assertNull(dto.getLetter());
         assertEquals(3, dto.getRemainingSpins());
     }
 
@@ -69,7 +69,7 @@ class SpinResultDTOTest {
         SpinResultDTO dto = new SpinResultDTO();
         dto.setType("CASH");
         dto.setValue("25.00");
-        dto.setCashWon(new BigDecimal("25.00"));
+        dto.setCash(new BigDecimal("25.00"));
         dto.setRemainingSpins(2);
 
         Set<ConstraintViolation<SpinResultDTO>> violations = validator.validate(dto);
@@ -81,7 +81,7 @@ class SpinResultDTOTest {
         SpinResultDTO dto = new SpinResultDTO();
         dto.setType("LETTER");
         dto.setValue("B");
-        dto.setLetterWon("B");
+        dto.setLetter("B");
         dto.setRemainingSpins(1);
 
         Set<ConstraintViolation<SpinResultDTO>> violations = validator.validate(dto);
@@ -123,16 +123,16 @@ class SpinResultDTOTest {
     }
 
     @Test
-    void testNegativeCashWon() {
+    void testNegativeCash() {
         SpinResultDTO dto = new SpinResultDTO();
         dto.setType("CASH");
         dto.setValue("10.00");
-        dto.setCashWon(new BigDecimal("-5.00"));
+        dto.setCash(new BigDecimal("-5.00"));
         dto.setRemainingSpins(0);
 
         Set<ConstraintViolation<SpinResultDTO>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("cashWon")));
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("cash")));
     }
 
     @Test
@@ -140,7 +140,7 @@ class SpinResultDTOTest {
         SpinResultDTO dto = new SpinResultDTO();
         dto.setType("CASH");
         dto.setValue("10.00");
-        dto.setCashWon(new BigDecimal("10.00"));
+        dto.setCash(new BigDecimal("10.00"));
         dto.setRemainingSpins(-1);
 
         Set<ConstraintViolation<SpinResultDTO>> violations = validator.validate(dto);
@@ -149,11 +149,11 @@ class SpinResultDTOTest {
     }
 
     @Test
-    void testInvalidLetterWon() {
+    void testInvalidLetter() {
         SpinResultDTO dto = new SpinResultDTO();
         dto.setType("LETTER");
         dto.setValue("AB");
-        dto.setLetterWon("AB");
+        dto.setLetter("AB");
         dto.setRemainingSpins(0);
 
         Set<ConstraintViolation<SpinResultDTO>> violations = validator.validate(dto);
@@ -169,21 +169,21 @@ class SpinResultDTOTest {
         assertNotNull(json);
         assertTrue(json.contains("\"type\":\"CASH\""));
         assertTrue(json.contains("\"value\":\"15.75\""));
-        assertTrue(json.contains("\"cashWon\":15.75"));
+        assertTrue(json.contains("\"cash\":15.75"));
         assertTrue(json.contains("\"remainingSpins\":3"));
     }
 
     @Test
     void testJsonDeserialization() throws Exception {
-        String json = "{\"type\":\"LETTER\",\"value\":\"C\",\"letterWon\":\"C\",\"remainingSpins\":2}";
+        String json = "{\"type\":\"LETTER\",\"value\":\"C\",\"letter\":\"C\",\"remainingSpins\":2}";
         
         SpinResultDTO dto = objectMapper.readValue(json, SpinResultDTO.class);
         
         assertEquals("LETTER", dto.getType());
         assertEquals("C", dto.getValue());
-        assertEquals("C", dto.getLetterWon());
+        assertEquals("C", dto.getLetter());
         assertEquals(2, dto.getRemainingSpins());
-        assertNull(dto.getCashWon());
+        assertNull(dto.getCash());
     }
 
     @Test
@@ -195,7 +195,7 @@ class SpinResultDTOTest {
         assertTrue(toString.contains("SpinResultDTO"));
         assertTrue(toString.contains("type='CASH'"));
         assertTrue(toString.contains("value='20.00'"));
-        assertTrue(toString.contains("cashWon=20.00"));
+        assertTrue(toString.contains("cash=20.00"));
         assertTrue(toString.contains("remainingSpins=1"));
     }
 
@@ -205,7 +205,7 @@ class SpinResultDTOTest {
         
         dto.setType("LETTER");
         dto.setValue("Z");
-        dto.setLetterWon("Z");
+        dto.setLetter("Z");
         dto.setRemainingSpins(0);
         
         assertEquals("LETTER", dto.getType());

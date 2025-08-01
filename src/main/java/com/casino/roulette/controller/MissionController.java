@@ -108,7 +108,15 @@ public class MissionController {
      */
     @Operation(
         summary = "Claim mission reward",
-        description = "Claim free spins from a completed mission. The mission must be eligible and the user must not have exceeded the maximum claims."
+        description = """
+        Claim free spins from a completed mission. The mission must be eligible and the user must not have exceeded the maximum claims.
+        
+        **Parameters:**
+        - Mission ID: Provided in URL path (e.g., /missions/1/claim)
+        - User ID: Provided in X-User-Id header
+        
+        **No request body is required for this endpoint.**
+        """
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -150,9 +158,17 @@ public class MissionController {
     })
     @PostMapping("/{missionId}/claim")
     public ResponseEntity<Map<String, Object>> claimMissionReward(
-            @Parameter(description = "Mission ID to claim", required = true, example = "1")
+            @Parameter(
+                description = "Mission ID to claim (provided in URL path)", 
+                required = true, 
+                example = "1"
+            )
             @PathVariable @NotNull @Positive Long missionId,
-            @Parameter(description = "User ID", required = true, example = "12345")
+            @Parameter(
+                description = "User ID (provided in request header)", 
+                required = true, 
+                example = "12345"
+            )
             @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
         
         try {

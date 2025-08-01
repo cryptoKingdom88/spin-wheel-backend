@@ -29,8 +29,14 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(
         summary = "User login",
-        description = "Process user login and grant daily login spin if eligible. " +
-                     "This is a simplified login endpoint for testing purposes."
+        description = """
+        Process user login and grant daily login spin if eligible. This is a simplified login endpoint for testing purposes.
+        
+        **Parameters:**
+        - User ID: Provided in X-User-Id header
+        
+        **No request body is required for this endpoint.**
+        """
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Login successful"),
@@ -38,7 +44,11 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Map<String, Object>> login(
-            @Parameter(description = "User ID for login", required = true, example = "12345")
+            @Parameter(
+                description = "User ID for login (provided in request header)", 
+                required = true, 
+                example = "12345"
+            )
             @RequestHeader("X-User-Id") Long userId) {
         
         try {

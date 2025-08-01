@@ -249,8 +249,8 @@ CREATE TABLE transaction_logs (
 public class SpinResultDTO {
     private String type; // "CASH" or "LETTER"
     private String value; // Amount or letter
-    private BigDecimal cashWon;
-    private String letterWon;
+    private BigDecimal cash;
+    private String letter;
     private Integer remainingSpins;
 }
 ```

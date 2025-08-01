@@ -45,12 +45,15 @@ public class RouletteService {
         }
         
         // Validate user exists first
-        userService.validateUserExists(userId);
+        User user = userService.validateUserExists(userId);
         
         // Check if user has sufficient spins
         if (!userService.hasSufficientSpins(userId, 1)) {
             throw new IllegalStateException("User has no available spins");
         }
+        
+        // Get current spin count before consumption
+        Integer currentSpins = user.getAvailableSpins();
         
         // Get active slots for weighted selection
         List<RouletteSlot> activeSlots = rouletteSlotRepository.findByActiveTrue();
@@ -67,9 +70,8 @@ public class RouletteService {
         // Perform weighted random selection
         RouletteSlot selectedSlot = performWeightedSelection(activeSlots);
         
-        // Get user's remaining spins after consumption
-        User user = userService.getUser(userId);
-        Integer remainingSpins = user != null ? user.getAvailableSpins() : 0;
+        // Calculate remaining spins (current - consumed)
+        Integer remainingSpins = currentSpins - 1;
         
         // Process the result based on slot type
         SpinResultDTO result;

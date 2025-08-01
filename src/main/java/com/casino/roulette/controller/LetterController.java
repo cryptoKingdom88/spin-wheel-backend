@@ -96,7 +96,9 @@ public class LetterController {
      */
     @GetMapping("/words")
     public ResponseEntity<List<LetterWordDTO>> getAvailableWords(
-            @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
+            @Parameter(description = "User ID (optional) - if provided, includes user-specific progress",
+                    required = false, example = "12345")
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         
         List<LetterWordDTO> words = letterService.getAvailableWords(userId);
         return ResponseEntity.ok(words);
@@ -123,9 +125,31 @@ public class LetterController {
      * @param userId The user ID from request header
      * @return Success response
      */
+    @Operation(
+        summary = "Claim word bonus",
+        description = """
+        Claim cash bonus for completing a letter word. The user must have collected all required letters.
+        
+        **Parameters:**
+        - Word ID: Provided in URL path (e.g., /letters/words/1/claim)
+        - User ID: Provided in X-User-Id header
+        
+        **No request body is required for this endpoint.**
+        """
+    )
     @PostMapping("/words/{wordId}/claim")
     public ResponseEntity<Map<String, Object>> claimWordBonus(
+            @Parameter(
+                description = "Word ID to claim (provided in URL path)", 
+                required = true, 
+                example = "1"
+            )
             @PathVariable @NotNull @Positive Long wordId,
+            @Parameter(
+                description = "User ID (provided in request header)", 
+                required = true, 
+                example = "12345"
+            )
             @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
         
         try {

@@ -69,7 +69,7 @@ public class MissionService {
                 -1L, // Special ID for daily login mission
                 dailyLoginMission.getName(),
                 dailyDescription,
-                canClaimDaily ? dailyLoginMission.getSpinsGranted() : 0,
+                dailyLoginMission.getSpinsGranted(), // Always show spins granted per claim
                 canClaimDaily,
                 0, // Daily login doesn't use claims_used counter
                 1 // No limit on daily login
@@ -94,7 +94,7 @@ public class MissionService {
                 mission.getId(),
                 mission.getName(),
                 description,
-                mission.getSpinsGranted() * availableClaims, // Total spins available
+                mission.getSpinsGranted(), // Spins granted per claim (not total)
                 canClaim,
                 claimsUsed,
                 mission.getMaxClaims()

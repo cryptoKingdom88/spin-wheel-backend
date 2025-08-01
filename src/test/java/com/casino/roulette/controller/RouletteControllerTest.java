@@ -75,7 +75,7 @@ class RouletteControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.type").value("CASH"))
                 .andExpect(jsonPath("$.value").value("10.00"))
-                .andExpect(jsonPath("$.cashWon").value(10.00))
+                .andExpect(jsonPath("$.cash").value(10.00))
                 .andExpect(jsonPath("$.remainingSpins").value(5));
         
         verify(rouletteService).spinRoulette(userId);
@@ -94,7 +94,7 @@ class RouletteControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.type").value("LETTER"))
                 .andExpect(jsonPath("$.value").value("A"))
-                .andExpect(jsonPath("$.letterWon").value("A"))
+                .andExpect(jsonPath("$.letter").value("A"))
                 .andExpect(jsonPath("$.remainingSpins").value(4));
         
         verify(rouletteService).spinRoulette(userId);

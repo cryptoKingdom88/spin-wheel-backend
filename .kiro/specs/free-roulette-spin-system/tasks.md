@@ -109,7 +109,7 @@
   - [x] 4.  Create DTO classes for API communication
   - [x] 4.1 Create SpinResultDTO class
 
-    - Write SpinResultDTO with type, value, cashWon, letterWon, remainingSpins fields
+    - Write SpinResultDTO with type, value, cash, letter, remainingSpins fields
     - Add validation annotations and constructors
     - Create unit tests for DTO serialization
     - _Requirements: 5.3, 5.5, 5.6_

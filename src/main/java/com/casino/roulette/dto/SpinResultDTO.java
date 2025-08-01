@@ -18,10 +18,10 @@ public class SpinResultDTO {
     private String value;
     
     @PositiveOrZero
-    private BigDecimal cashWon;
+    private BigDecimal cash;
     
     @Pattern(regexp = "[A-Z]", message = "Letter must be a single uppercase letter")
-    private String letterWon;
+    private String letter;
     
     @PositiveOrZero
     private Integer remainingSpins;
@@ -30,27 +30,27 @@ public class SpinResultDTO {
     public SpinResultDTO() {}
     
     // Constructor for cash wins
-    public SpinResultDTO(String type, String value, BigDecimal cashWon, Integer remainingSpins) {
+    public SpinResultDTO(String type, String value, BigDecimal cash, Integer remainingSpins) {
         this.type = type;
         this.value = value;
-        this.cashWon = cashWon;
+        this.cash = cash;
         this.remainingSpins = remainingSpins;
     }
     
     // Constructor for letter wins
-    public SpinResultDTO(String type, String value, String letterWon, Integer remainingSpins) {
+    public SpinResultDTO(String type, String value, String letter, Integer remainingSpins) {
         this.type = type;
         this.value = value;
-        this.letterWon = letterWon;
+        this.letter = letter;
         this.remainingSpins = remainingSpins;
     }
     
     // Full constructor
-    public SpinResultDTO(String type, String value, BigDecimal cashWon, String letterWon, Integer remainingSpins) {
+    public SpinResultDTO(String type, String value, BigDecimal cash, String letter, Integer remainingSpins) {
         this.type = type;
         this.value = value;
-        this.cashWon = cashWon;
-        this.letterWon = letterWon;
+        this.cash = cash;
+        this.letter = letter;
         this.remainingSpins = remainingSpins;
     }
     
@@ -71,20 +71,20 @@ public class SpinResultDTO {
         this.value = value;
     }
     
-    public BigDecimal getCashWon() {
-        return cashWon;
+    public BigDecimal getCash() {
+        return cash;
     }
     
-    public void setCashWon(BigDecimal cashWon) {
-        this.cashWon = cashWon;
+    public void setCash(BigDecimal cash) {
+        this.cash = cash;
     }
     
-    public String getLetterWon() {
-        return letterWon;
+    public String getLetter() {
+        return letter;
     }
     
-    public void setLetterWon(String letterWon) {
-        this.letterWon = letterWon;
+    public void setLetter(String letter) {
+        this.letter = letter;
     }
     
     public Integer getRemainingSpins() {
@@ -100,8 +100,8 @@ public class SpinResultDTO {
         return "SpinResultDTO{" +
                 "type='" + type + '\'' +
                 ", value='" + value + '\'' +
-                ", cashWon=" + cashWon +
-                ", letterWon='" + letterWon + '\'' +
+                ", cash=" + cash +
+                ", letter='" + letter + '\'' +
                 ", remainingSpins=" + remainingSpins +
                 '}';
     }

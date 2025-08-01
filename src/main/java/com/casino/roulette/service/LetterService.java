@@ -90,11 +90,16 @@ public class LetterService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         
+        System.out.println("=== getUserLetterCollection called for userId: " + userId + " ===");
+        
         // Validate user exists first
         userService.validateUserExists(userId);
         
         List<LetterCollection> collections = letterCollectionRepository
             .findByUserIdWithPositiveCount(userId);
+        
+        System.out.println("Found " + collections.size() + " letter collections:");
+        collections.forEach(c -> System.out.println("  " + c.getLetter() + ": " + c.getCount()));
         
         return collections.stream()
             .map(collection -> new LetterCollectionDTO(collection.getLetter(), collection.getCount()))
@@ -106,16 +111,38 @@ public class LetterService {
      */
     @Transactional(readOnly = true)
     public List<LetterWordDTO> getAvailableWords(Long userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
-        }
+        System.out.println("=== getAvailableWords called for userId: " + userId + " ===");
         
         List<LetterWord> activeWords = letterWordRepository.findActiveWordsOrderByRewardDesc();
         Map<String, Integer> userLetters = getUserLetterMap(userId);
         
+        System.out.println("Active words count: " + activeWords.size());
+        System.out.println("User letters from getUserLetterMap: " + userLetters);
+        
         return activeWords.stream()
             .map(word -> {
+                Map<String, Integer> required = word.getRequiredLettersMap();
                 boolean canClaim = word.canClaimWith(userLetters);
+                
+                // Debug logging with detailed comparison
+                System.out.println("=== Letter Word Claim Check ===");
+                System.out.println("User ID: " + userId);
+                System.out.println("Word: " + word.getWord());
+                System.out.println("Required: " + required);
+                System.out.println("User has: " + userLetters);
+                
+                // Check each letter individually
+                for (Map.Entry<String, Integer> entry : required.entrySet()) {
+                    String letter = entry.getKey();
+                    Integer requiredCount = entry.getValue();
+                    Integer userCount = userLetters.getOrDefault(letter, 0);
+                    boolean hasEnough = userCount >= requiredCount;
+                    System.out.println("  " + letter + ": required=" + requiredCount + ", user=" + userCount + ", hasEnough=" + hasEnough);
+                }
+                
+                System.out.println("Final canClaim: " + canClaim);
+                System.out.println("===============================");
+                
                 return new LetterWordDTO(
                     word.getId(),
                     word.getWord(),
@@ -306,6 +333,8 @@ public class LetterService {
      * Get user's letter collection as a map for internal use
      */
     private Map<String, Integer> getUserLetterMap(Long userId) {
+        if (userId == null) return null;
+
         List<LetterCollection> collections = letterCollectionRepository
             .findByUserIdWithPositiveCount(userId);
         

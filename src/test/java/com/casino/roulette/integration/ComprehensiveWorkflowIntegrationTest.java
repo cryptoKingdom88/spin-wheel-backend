@@ -188,12 +188,12 @@ public class ComprehensiveWorkflowIntegrationTest {
             
             if ("CASH".equals(result.getType())) {
                 totalCashWins++;
-                assertThat(result.getCashWon()).isNotNull();
-                assertThat(result.getCashWon()).isGreaterThan(BigDecimal.ZERO);
+                assertThat(result.getCash()).isNotNull();
+                assertThat(result.getCash()).isGreaterThan(BigDecimal.ZERO);
             } else if ("LETTER".equals(result.getType())) {
                 totalLetterWins++;
-                assertThat(result.getLetterWon()).isNotNull();
-                assertThat(result.getLetterWon()).matches("[A-Z]");
+                assertThat(result.getLetter()).isNotNull();
+                assertThat(result.getLetter()).matches("[A-Z]");
             }
         }
 
@@ -361,13 +361,13 @@ public class ComprehensiveWorkflowIntegrationTest {
             
             if ("CASH".equals(result.getType())) {
                 cashWins++;
-                assertThat(result.getCashWon()).isNotNull();
-                assertThat(result.getCashWon()).isGreaterThan(BigDecimal.ZERO);
-                totalCashWon = totalCashWon.add(result.getCashWon());
+                assertThat(result.getCash()).isNotNull();
+                assertThat(result.getCash()).isGreaterThan(BigDecimal.ZERO);
+                totalCashWon = totalCashWon.add(result.getCash());
             } else if ("LETTER".equals(result.getType())) {
                 letterWins++;
-                assertThat(result.getLetterWon()).isNotNull();
-                assertThat(result.getLetterWon()).matches("[A-Z]");
+                assertThat(result.getLetter()).isNotNull();
+                assertThat(result.getLetter()).matches("[A-Z]");
             }
         }
 

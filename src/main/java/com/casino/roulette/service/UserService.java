@@ -5,6 +5,8 @@ import com.casino.roulette.entity.User;
 import com.casino.roulette.exception.UserNotFoundException;
 import com.casino.roulette.repository.TransactionLogRepository;
 import com.casino.roulette.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,9 @@ public class UserService {
     
     private final UserRepository userRepository;
     private final TransactionLogRepository transactionLogRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
     
     @Autowired
     public UserService(UserRepository userRepository, TransactionLogRepository transactionLogRepository) {
@@ -169,6 +174,23 @@ public class UserService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         
+        return userRepository.findById(userId).orElse(null);
+    }
+    
+    /**
+     * Get user with fresh data from database (bypassing cache)
+     */
+    @Transactional(readOnly = true)
+    public User getUserWithRefresh(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        
+        // Flush any pending changes and clear the persistence context
+        entityManager.flush();
+        entityManager.clear();
+        
+        // Now fetch fresh data from database
         return userRepository.findById(userId).orElse(null);
     }
     

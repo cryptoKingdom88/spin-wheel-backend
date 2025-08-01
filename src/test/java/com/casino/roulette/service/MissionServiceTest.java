@@ -65,6 +65,7 @@ class MissionServiceTest {
         
         testProgress = new UserMissionProgress(TEST_USER_ID, TEST_MISSION_ID);
         testProgress.setClaimsUsed(2);
+        testProgress.setAvailableClaims(1); // 1 claim available
     }
     
     @Test
