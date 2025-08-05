@@ -246,4 +246,88 @@ public class MissionController {
         
         return ResponseEntity.ok(response);
     }
+    
+    /**
+     * Claim one mission reward (single claim)
+     * 
+     * @param missionId The mission ID to claim
+     * @param userId The user ID from request header
+     * @return Success response
+     */
+    @Operation(
+        summary = "Claim one mission reward",
+        description = """
+        Claim a single reward from a mission instead of all available rewards at once.
+        This allows users to claim rewards incrementally.
+        
+        **Parameters:**
+        - Mission ID: Provided in URL path (e.g., /missions/1/claim-one)
+        - User ID: Provided in X-User-Id header
+        """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Single mission reward claimed successfully",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Success response",
+                    value = """
+                    {
+                      "success": true,
+                      "message": "Mission reward claimed successfully",
+                      "missionId": 1
+                    }
+                    """
+                )
+            )
+        ),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
+        @ApiResponse(responseCode = "422", description = "Mission not available for claiming"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/{missionId}/claim-one")
+    public ResponseEntity<Map<String, Object>> claimOneMissionReward(
+            @Parameter(
+                description = "Mission ID to claim (provided in URL path). Use -1 for Daily Login Mission.", 
+                required = true, 
+                example = "1"
+            )
+            @PathVariable @NotNull Long missionId,
+            @Parameter(
+                description = "User ID (provided in request header)", 
+                required = true, 
+                example = "12345"
+            )
+            @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
+        
+        try {
+            missionService.claimOneMissionReward(userId, missionId);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "Mission reward claimed successfully",
+                "missionId", missionId
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = Map.of(
+                "success", false,
+                "error", "INVALID_REQUEST",
+                "message", e.getMessage()
+            );
+            return ResponseEntity.badRequest().body(errorResponse);
+            
+        } catch (IllegalStateException e) {
+            Map<String, Object> errorResponse = Map.of(
+                "success", false,
+                "error", "MISSION_NOT_AVAILABLE",
+                "message", e.getMessage()
+            );
+            return ResponseEntity.unprocessableEntity().body(errorResponse);
+        }
+    }
 }

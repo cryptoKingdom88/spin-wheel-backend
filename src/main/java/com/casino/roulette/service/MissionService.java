@@ -73,7 +73,8 @@ public class MissionService {
                 -1L, // Special ID for daily login mission
                 dailyLoginMission.getName(),
                 dailyDescription,
-                dailyLoginMission.getSpinsGranted(), // Always show spins granted per claim
+                dailyLoginMission.getSpinsGranted(), // Spins per claim (always 1 for daily login)
+                canClaimDaily ? dailyLoginMission.getSpinsGranted() : 0, // Pending spins (1 if can claim, 0 if already claimed)
                 canClaimDaily,
                 claimsUsedToday, // 0 if can claim, 1 if already claimed today
                 1 // Daily limit is 1 per day
@@ -98,7 +99,8 @@ public class MissionService {
                 mission.getId(),
                 mission.getName(),
                 description,
-                mission.getSpinsGranted(), // Spins granted per claim (not total)
+                mission.getSpinsGranted(), // Spins per claim (e.g., 2 for $500 deposit)
+                mission.getSpinsGranted() * availableClaims, // Total pending spins to claim
                 canClaim,
                 claimsUsed,
                 mission.getMaxClaims()
@@ -126,10 +128,11 @@ public class MissionService {
                 -1L, // Special ID for daily login mission
                 dailyLoginMission.getName(),
                 dailyLoginMission.getDescription(),
-                dailyLoginMission.getSpinsGranted(), // Base spins available
+                dailyLoginMission.getSpinsGranted(), // Spins per claim
+                0, // No pending spins without user context
                 false, // Cannot determine claim status without user
                 0, // No user-specific data
-                1 // No limit on daily login
+                1 // Daily limit is 1 per day
             );
             
             missionDTOs.add(dailyMissionDTO);
@@ -144,7 +147,8 @@ public class MissionService {
                 mission.getId(),
                 mission.getName(),
                 description,
-                mission.getSpinsGranted(), // Base spins per claim
+                mission.getSpinsGranted(), // Spins per claim
+                0, // No pending spins without user context
                 false, // Cannot determine claim status without user
                 0, // No user-specific data
                 mission.getMaxClaims()
@@ -206,6 +210,63 @@ public class MissionService {
         // Log the mission claim transaction
         TransactionLog log = TransactionLog.createDepositMissionSpinLog(
             userId, mission.getName() + " (x" + claimedCount + ")", totalSpins);
+        transactionLogRepository.save(log);
+    }
+    
+    /**
+     * Claim one mission reward (single claim)
+     */
+    public void claimOneMissionReward(Long userId, Long missionId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        if (missionId == null) {
+            throw new IllegalArgumentException("Mission ID cannot be null");
+        }
+        
+        // Validate user exists first
+        userService.validateUserExists(userId);
+        
+        // Check if this is a daily login mission (special ID -1)
+        if (missionId == -1L) {
+            claimDailyLoginMission(userId);
+            return;
+        }
+        
+        // Handle deposit mission - claim only one
+        DepositMission mission = depositMissionRepository.findById(missionId)
+            .orElseThrow(() -> new IllegalArgumentException("Mission not found: " + missionId));
+        
+        if (!mission.getActive()) {
+            throw new IllegalStateException("Mission is not active: " + missionId);
+        }
+        
+        // Get or create user progress
+        UserMissionProgress progress = userMissionProgressRepository
+            .findByUserIdAndMissionId(userId, missionId)
+            .orElse(new UserMissionProgress(userId, missionId));
+        
+        // Check if user can still claim
+        if (!progress.canClaim(mission.getMaxClaims())) {
+            throw new IllegalStateException("No available claims for mission: " + missionId);
+        }
+        
+        // Claim only one reward
+        Integer claimedCount = progress.claimOne();
+        if (claimedCount == 0) {
+            throw new IllegalStateException("No available claims for mission: " + missionId);
+        }
+        
+        userMissionProgressRepository.save(progress);
+        
+        // Grant spins to user (single claim)
+        Integer totalSpins = mission.getSpinsGranted() * claimedCount;
+        userService.grantSpins(userId, totalSpins, 
+            "Mission reward: " + mission.getName());
+        
+        // Log the mission claim transaction
+        TransactionLog log = TransactionLog.createDepositMissionSpinLog(
+            userId, mission.getName(), totalSpins);
         transactionLogRepository.save(log);
     }
     
@@ -392,7 +453,7 @@ public class MissionService {
         List<MissionDTO> missions = getAvailableMissions(userId);
         return missions.stream()
             .filter(MissionDTO::getCanClaim)
-            .mapToInt(mission -> mission.getSpinsAvailable() * mission.getRemainingClaims())
+            .mapToInt(MissionDTO::getPendingSpins)
             .sum();
     }
     

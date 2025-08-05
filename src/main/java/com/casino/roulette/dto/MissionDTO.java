@@ -18,7 +18,10 @@ public class MissionDTO {
     private String description;
     
     @PositiveOrZero
-    private Integer spinsAvailable;
+    private Integer spinsPerClaim; // Spins granted per single claim (e.g., 2 for $500 deposit)
+    
+    @PositiveOrZero
+    private Integer pendingSpins; // Total spins waiting to be claimed
     
     @NotNull
     private Boolean canClaim;
@@ -33,23 +36,25 @@ public class MissionDTO {
     public MissionDTO() {}
     
     // Full constructor
-    public MissionDTO(Long id, String name, String description, Integer spinsAvailable, 
-                     Boolean canClaim, Integer claimsUsed, Integer maxClaims) {
+    public MissionDTO(Long id, String name, String description, Integer spinsPerClaim, 
+                     Integer pendingSpins, Boolean canClaim, Integer claimsUsed, Integer maxClaims) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.spinsAvailable = spinsAvailable;
+        this.spinsPerClaim = spinsPerClaim;
+        this.pendingSpins = pendingSpins;
         this.canClaim = canClaim;
         this.claimsUsed = claimsUsed;
         this.maxClaims = maxClaims;
     }
     
     // Constructor without description
-    public MissionDTO(Long id, String name, Integer spinsAvailable, Boolean canClaim, 
-                     Integer claimsUsed, Integer maxClaims) {
+    public MissionDTO(Long id, String name, Integer spinsPerClaim, Integer pendingSpins, 
+                     Boolean canClaim, Integer claimsUsed, Integer maxClaims) {
         this.id = id;
         this.name = name;
-        this.spinsAvailable = spinsAvailable;
+        this.spinsPerClaim = spinsPerClaim;
+        this.pendingSpins = pendingSpins;
         this.canClaim = canClaim;
         this.claimsUsed = claimsUsed;
         this.maxClaims = maxClaims;
@@ -80,13 +85,23 @@ public class MissionDTO {
         this.description = description;
     }
     
-    public Integer getSpinsAvailable() {
-        return spinsAvailable;
+    public Integer getSpinsPerClaim() {
+        return spinsPerClaim;
     }
     
-    public void setSpinsAvailable(Integer spinsAvailable) {
-        this.spinsAvailable = spinsAvailable;
+    public void setSpinsPerClaim(Integer spinsPerClaim) {
+        this.spinsPerClaim = spinsPerClaim;
     }
+    
+    public Integer getPendingSpins() {
+        return pendingSpins;
+    }
+    
+    public void setPendingSpins(Integer pendingSpins) {
+        this.pendingSpins = pendingSpins;
+    }
+    
+
     
     public Boolean getCanClaim() {
         return canClaim;
@@ -138,7 +153,8 @@ public class MissionDTO {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", spinsAvailable=" + spinsAvailable +
+                ", spinsPerClaim=" + spinsPerClaim +
+                ", pendingSpins=" + pendingSpins +
                 ", canClaim=" + canClaim +
                 ", claimsUsed=" + claimsUsed +
                 ", maxClaims=" + maxClaims +

@@ -138,6 +138,20 @@ public class UserMissionProgress {
     }
     
     /**
+     * Claim one available reward
+     * Returns 1 if successful, 0 if no claims available
+     */
+    public Integer claimOne() {
+        if (this.availableClaims > 0) {
+            this.claimsUsed += 1;
+            this.availableClaims -= 1;
+            this.lastClaimDate = LocalDateTime.now();
+            return 1;
+        }
+        return 0;
+    }
+    
+    /**
      * Checks if the user can still claim rewards from this mission
      */
     public boolean canClaim(Integer maxClaims) {
