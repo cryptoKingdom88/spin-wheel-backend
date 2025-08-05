@@ -52,21 +52,15 @@ public class AuthController {
             @RequestHeader("X-User-Id") Long userId) {
         
         try {
-            // Process daily login spin
-            boolean spinGranted = userService.grantDailyLoginSpin(userId);
+            // Just ensure user exists (don't auto-grant daily spin)
+            userService.getOrCreateUser(userId);
             
             // Prepare response
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Login successful");
             response.put("userId", userId);
-            response.put("dailySpinGranted", spinGranted);
-            
-            if (spinGranted) {
-                response.put("spinMessage", "Daily login spin granted!");
-            } else {
-                response.put("spinMessage", "Daily login spin already claimed today");
-            }
+            response.put("note", "Check missions to claim daily login bonus");
             
             return ResponseEntity.ok(response);
             

@@ -159,11 +159,11 @@ public class MissionController {
     @PostMapping("/{missionId}/claim")
     public ResponseEntity<Map<String, Object>> claimMissionReward(
             @Parameter(
-                description = "Mission ID to claim (provided in URL path)", 
+                description = "Mission ID to claim (provided in URL path). Use -1 for Daily Login Mission.", 
                 required = true, 
                 example = "1"
             )
-            @PathVariable @NotNull @Positive Long missionId,
+            @PathVariable @NotNull Long missionId,
             @Parameter(
                 description = "User ID (provided in request header)", 
                 required = true, 
@@ -232,7 +232,7 @@ public class MissionController {
      */
     @GetMapping("/{missionId}/eligibility")
     public ResponseEntity<Map<String, Object>> checkMissionEligibility(
-            @PathVariable @NotNull @Positive Long missionId,
+            @PathVariable @NotNull Long missionId,
             @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
         
         boolean isEligible = missionService.isUserEligibleForMission(userId, missionId);

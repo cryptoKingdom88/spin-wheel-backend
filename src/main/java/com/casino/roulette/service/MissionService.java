@@ -51,8 +51,9 @@ public class MissionService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         
-        // Validate user exists first
-        userService.validateUserExists(userId);
+        // For mission list, we allow new users (they can claim daily login)
+        // So we use getOrCreateUser instead of validateUserExists
+        userService.getOrCreateUser(userId);
         
         List<MissionDTO> missionDTOs = new ArrayList<>();
         
@@ -65,14 +66,17 @@ public class MissionService {
             boolean canClaimDaily = canClaimDailyLogin(user);
             String dailyDescription = buildDailyLoginDescription(dailyLoginMission, user);
             
+            // Check if user already claimed today
+            int claimsUsedToday = canClaimDaily ? 0 : 1;
+            
             MissionDTO dailyMissionDTO = new MissionDTO(
                 -1L, // Special ID for daily login mission
                 dailyLoginMission.getName(),
                 dailyDescription,
                 dailyLoginMission.getSpinsGranted(), // Always show spins granted per claim
                 canClaimDaily,
-                0, // Daily login doesn't use claims_used counter
-                1 // No limit on daily login
+                claimsUsedToday, // 0 if can claim, 1 if already claimed today
+                1 // Daily limit is 1 per day
             );
             
             missionDTOs.add(dailyMissionDTO);
@@ -209,12 +213,11 @@ public class MissionService {
      * Claim daily login mission reward
      */
     private void claimDailyLoginMission(Long userId) {
-        // This is the same logic as in UserService.grantDailyLoginSpin
-        // but called through the mission system
-        boolean spinGranted = userService.grantDailyLoginSpin(userId);
+        // Use the dedicated daily mission spin method
+        boolean spinGranted = userService.grantDailyMissionSpin(userId);
         
         if (!spinGranted) {
-            throw new IllegalStateException("Daily login spin already claimed today");
+            throw new IllegalStateException("Daily mission spin already claimed today");
         }
     }
     
@@ -267,6 +270,12 @@ public class MissionService {
             return false;
         }
         
+        // Special handling for Daily Login Mission
+        if (missionId == -1L) {
+            User user = userService.getUser(userId);
+            return canClaimDailyLogin(user);
+        }
+        
         return userMissionProgressRepository.isUserEligibleForMission(userId, missionId);
     }
     
@@ -277,6 +286,12 @@ public class MissionService {
     public Integer getRemainingClaims(Long userId, Long missionId) {
         if (userId == null || missionId == null) {
             return 0;
+        }
+        
+        // Special handling for Daily Login Mission
+        if (missionId == -1L) {
+            User user = userService.getUser(userId);
+            return canClaimDailyLogin(user) ? 1 : 0;
         }
         
         return userMissionProgressRepository.getRemainingClaimsForMission(userId, missionId);
@@ -314,12 +329,12 @@ public class MissionService {
             return true; // New user can claim
         }
         
-        if (user.getLastDailyLogin() == null) {
-            return true; // Never logged in before
+        if (user.getLastDailyMissionClaim() == null) {
+            return true; // Never claimed daily mission before
         }
         
-        // Check if last login was on a different day
-        return !user.getLastDailyLogin().toLocalDate().equals(java.time.LocalDate.now());
+        // Check if last daily mission claim was on a different day
+        return !user.getLastDailyMissionClaim().toLocalDate().equals(java.time.LocalDate.now());
     }
     
     /**
@@ -329,8 +344,8 @@ public class MissionService {
         StringBuilder description = new StringBuilder();
         description.append(mission.getDescription());
         
-        if (user != null && user.getLastDailyLogin() != null) {
-            if (user.getLastDailyLogin().toLocalDate().equals(java.time.LocalDate.now())) {
+        if (user != null && user.getLastDailyMissionClaim() != null) {
+            if (user.getLastDailyMissionClaim().toLocalDate().equals(java.time.LocalDate.now())) {
                 description.append(" (Already claimed today)");
             } else {
                 description.append(" (Available now!)");

@@ -29,6 +29,9 @@ public class User {
     @Column(name = "last_daily_login")
     private LocalDateTime lastDailyLogin;
     
+    @Column(name = "last_daily_mission_claim")
+    private LocalDateTime lastDailyMissionClaim;
+    
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
     
@@ -95,6 +98,14 @@ public class User {
         this.lastDailyLogin = lastDailyLogin;
     }
     
+    public LocalDateTime getLastDailyMissionClaim() {
+        return lastDailyMissionClaim;
+    }
+    
+    public void setLastDailyMissionClaim(LocalDateTime lastDailyMissionClaim) {
+        this.lastDailyMissionClaim = lastDailyMissionClaim;
+    }
+    
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -124,6 +135,7 @@ public class User {
                 ", availableSpins=" + availableSpins +
                 ", firstDepositBonusUsed=" + firstDepositBonusUsed +
                 ", lastDailyLogin=" + lastDailyLogin +
+                ", lastDailyMissionClaim=" + lastDailyMissionClaim +
                 '}';
     }
 }

@@ -27,81 +27,56 @@ import java.util.Map;
 @Validated
 @Tag(name = "Users", description = "User information and status operations")
 public class UserController {
-    
+
     private final UserService userService;
-    
+
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
-    
+
     /**
      * Get user's available spins count
      * 
      * @param userId The user ID from request header
      * @return User's available spins information
      */
-    @Operation(
-        summary = "Get user's available spins",
-        description = "Retrieve the current number of free spins available for the user."
-    )
+    @Operation(summary = "Get user's available spins", description = "Retrieve the current number of free spins available for the user.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved user's available spins",
-            content = @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject(
-                    name = "Available spins",
-                    value = """
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved user's available spins", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Available spins", value = """
                     {
                       "userId": 123,
                       "availableSpins": 5,
                       "canSpin": true
                     }
-                    """
-                )
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "User not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid user ID"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
+                    """))),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid user ID"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/spins")
     public ResponseEntity<Map<String, Object>> getAvailableSpins(
-            @Parameter(description = "User ID", required = true, example = "12345")
-            @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
-        
+            @Parameter(description = "User ID", required = true, example = "12345") @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
+
         User user = userService.validateUserExists(userId);
-        
+
         Map<String, Object> response = Map.of(
-            "userId", userId,
-            "availableSpins", user.getAvailableSpins(),
-            "canSpin", user.getAvailableSpins() > 0
-        );
-        
+                "userId", userId,
+                "availableSpins", user.getAvailableSpins(),
+                "canSpin", user.getAvailableSpins() > 0);
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Get user's basic information
      * 
      * @param userId The user ID from request header
      * @return User's basic information
      */
-    @Operation(
-        summary = "Get user's basic information",
-        description = "Retrieve user's basic information including cash balance, spins, and status."
-    )
+    @Operation(summary = "Get user's basic information", description = "Retrieve user's basic information including cash balance, spins, and status.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved user information",
-            content = @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject(
-                    name = "User information",
-                    value = """
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved user information", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "User information", value = """
                     {
                       "userId": 123,
                       "cashBalance": 150.50,
@@ -110,30 +85,25 @@ public class UserController {
                       "lastDailyLogin": "2025-07-31T10:30:00",
                       "canSpin": true
                     }
-                    """
-                )
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "User not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid user ID"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
+                    """))),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid user ID"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/info")
     public ResponseEntity<Map<String, Object>> getUserInfo(
-            @Parameter(description = "User ID", required = true, example = "12345")
-            @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
-        
+            @Parameter(description = "User ID", required = true, example = "12345") @RequestHeader("X-User-Id") @NotNull @Positive Long userId) {
+
         User user = userService.validateUserExists(userId);
-        
+
         Map<String, Object> response = Map.of(
-            "userId", userId,
-            "cashBalance", user.getCashBalance(),
-            "availableSpins", user.getAvailableSpins(),
-            "firstDepositBonusUsed", user.getFirstDepositBonusUsed(),
-            "lastDailyLogin", user.getLastDailyLogin(),
-            "canSpin", user.getAvailableSpins() > 0
-        );
-        
+                "userId", userId,
+                "cashBalance", user.getCashBalance(),
+                "availableSpins", user.getAvailableSpins(),
+                "firstDepositBonusUsed", user.getFirstDepositBonusUsed(),
+                "lastDailyLogin", user.getLastDailyLogin(),
+                "canSpin", user.getAvailableSpins() > 0);
+
         return ResponseEntity.ok(response);
     }
 }

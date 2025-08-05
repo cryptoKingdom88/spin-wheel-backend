@@ -59,4 +59,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.availableSpins = u.availableSpins - :spins WHERE u.id = :userId AND u.availableSpins >= :spins")
     int consumeSpins(@Param("userId") Long userId, @Param("spins") Integer spins);
+    
+    /**
+     * Set user's last daily mission claim timestamp
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.lastDailyMissionClaim = :claimTime WHERE u.id = :userId")
+    int updateLastDailyMissionClaim(@Param("userId") Long userId, @Param("claimTime") LocalDateTime claimTime);
 }
